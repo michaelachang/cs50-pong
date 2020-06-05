@@ -114,6 +114,7 @@ function love.load()
     -- 3. 'play' (the ball is in play, bouncing between paddles)
     -- 4. 'done' (the game is over, with a victor, ready for restart)
     gameState = 'start'
+    roboMode = false
 end
 
 --[[
@@ -242,12 +243,22 @@ function love.update(dt)
     end
 
     -- player 2
-    if love.keyboard.isDown('up') then
-        player2.dy = -PADDLE_SPEED
-    elseif love.keyboard.isDown('down') then
-        player2.dy = PADDLE_SPEED
+    if roboMode then
+        if ball.y + 2 > player2.y and ball.y + 2 < player2.y + 20 then
+            player2.dy = 0
+        elseif ball.y + 2 < player2.y then
+            player2.dy = -PADDLE_SPEED
+        else
+            player2.dy = PADDLE_SPEED
+        end
     else
-        player2.dy = 0
+        if love.keyboard.isDown('up') then
+            player2.dy = -PADDLE_SPEED
+        elseif love.keyboard.isDown('down') then
+            player2.dy = PADDLE_SPEED
+        else
+            player2.dy = 0
+        end
     end
 
     -- update our ball based on its DX and DY only if we're in play state;
@@ -297,6 +308,12 @@ function love.keypressed(key)
             end
         end
     end
+
+    if gameState == 'serve' and player1Score == 0 and player2Score == 0 then
+        if key == 'backspace' then
+            roboMode = true
+        end
+    end
 end
 
 --[[
@@ -320,7 +337,11 @@ function love.draw()
         love.graphics.setFont(smallFont)
         love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!", 
             0, 10, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
+        if player1Score == 0 and player2Score == 0 then 
+            love.graphics.printf('Press Enter to serve! Press Backspace if you want to play impossible mode!', 0, 20, VIRTUAL_WIDTH, 'center')
+        else
+            love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
+        end
     elseif gameState == 'play' then
         -- no UI messages to display in play
     elseif gameState == 'done' then
@@ -330,6 +351,7 @@ function love.draw()
             0, 10, VIRTUAL_WIDTH, 'center')
         love.graphics.setFont(smallFont)
         love.graphics.printf('Press Enter to restart!', 0, 30, VIRTUAL_WIDTH, 'center')
+        roboMode = false
     end
 
     -- show the score before ball is rendered so it can move over the text
